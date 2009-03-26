@@ -1,0 +1,217 @@
+/*
+ *	01001111 - A collection of css styles to help facilitate rapid
+ *		development through intuitive naming and classification.
+ *
+ *	Copyright (c) 2006 Oliver C Dodd
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a 
+ *  copy of this software and associated documentation files (the "Software"),
+ *  to deal in the Software without restriction, including without limitation
+ *  the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ *  and/or sell copies of the Software, and to permit persons to whom the 
+ *  Software is furnished to do so, subject to the following conditions:
+ *  
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
+ *  
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL 
+ *  THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ *  DEALINGS IN THE SOFTWARE.
+ */
+
+/*----------------------------------------------------------------------------*\
+|* ELEMENTS                                                                   *|
+\*----------------------------------------------------------------------------*/
+
+/* remove default padding/margin/borders/outline on most containers*/
+html,body,div,table,th,tr,td,form,img,ul,li
+			{ margin:0; padding:0; border:0; outline:0; }
+input,textarea		{ margin:0; padding:0; }
+table			{ border-collapse:collapse; }
+
+/* force the document to take up the entire page */
+/*html,body		{ width:100%; height:100%; }*/
+
+/*----------------------------------------------------------------------------*\
+|* CLASSES                                                                    *|
+\*----------------------------------------------------------------------------*/
+
+/* quick font classes */
+.bold			{ font-weight:bold; }
+.italic      		{ font-style:italic; }
+.small-caps  		{ font-variant:small-caps; }
+.underline   		{ text-decoration:underline; }
+.overline    		{ text-decoration:overline; }
+.line-through		{ text-decoration:line-through; }
+.backwards		{ direction:rtl; unicode-bidi:bidi-override; }
+
+/* hidden		- effectively not there
+ * invisible	- invisible but tangible, like a clear box
+ * visible	- visible and tangible
+ */
+.hidden			{ display:none; }
+.invisible		{ visibility:hidden; }
+.visible		{ visibility:visible; }
+
+/* expand/collapse trick */
+.expanded		{ }
+.collapsed		{ display:none; }
+
+/* display/position */
+.d-inline,.dispi	{ display:inline; }
+.d-block,.dispb		{ display:block; }
+.p-absolute,.posa	{ position:absolute; }
+.p-relative,.posr	{ position:relative; }
+.p-static,.poss		{ position:static; }
+
+/* full width and height */
+.w100			{ width:100%; }
+.h100			{ height:100%; }
+
+/* half width and height */
+.w50			{ width:50%; }
+.h50			{ height:50%; }
+
+/* golden ratio - a:b = 1:1.61803399 */
+.w-golden-ratio-a,.wgra	{ width:38.2%; }
+.w-golden-ratio-b,.wgrb	{ width:61.8%; }
+.h-golden-ratio-a,.hgra	{ height:38.2%; }
+.h-golden-ratio-b,.hgrb	{ height:61.8%; }
+
+/* for use with the Graphics::img2ascii PHP class
+ * 	scale->	font-size @	line-height for 1:1 img to text div:
+ *	50% ->	4px	@	 2px (50%)
+ *	20% ->	8px	@	 5px (63%)
+ *	10% ->	16px	@	10px (63%)
+ */
+.img2ascii { font-family:Courier New; padding:0;margin:0; }
+.img2ascii50 { line-height:2px; font-size:4px; }
+.img2ascii20 { line-height:5px; font-size:8px; }
+.img2ascii10 { line-height:10px; font-size:16px; }
+
+/*----------------------------------------------------------------------------*\
+|* ALIGNMENT                                                                  *|
+\*----------------------------------------------------------------------------*/
+
+/* horizontal alignment of an element */
+.a-center,.ac		{ margin-left:auto; margin-right:auto; }
+.a-left,.al		{ margin-right:auto; }
+.a-right,.ar		{ margin-left:auto; }
+
+/* vertical alignment of an element
+.a-middle,.am		{ margin-top:auto; margin-bottom:auto; }
+.a-top,.at			{ }
+.a-bottom,.ab		{ margin-top:auto; } */
+
+/* horizontal alignment of an element's contents */
+.ac-center,.acc		{ text-align:center; }
+.ac-left,.acl		{ text-align:left; }
+.ac-right,.acr		{ text-align:right; }
+.justify		{ text-align:justify; }
+
+/* vertical alignment of an element's contents */
+.ac-middle,.acm		{ vertical-align:middle; }
+.ac-top,.act		{ vertical-align:top; }
+.ac-bottom,.acb		{ vertical-align:bottom; }
+
+/* float */
+.float-left		{ float:left; }
+.float-right		{ float:right; }
+
+/*
+ * LAYOUTS
+ *
+ * #pg is the div encompassing the entirety of the page whereas the body is
+ * treated as the frame of said page.  There are two main types of layouts:
+ *	1) the purely div based layout
+ *	2) the layout using a table as a frame for the page in order to easily
+ *	enable the centering on both the horizontal and vertical planes while
+ *	retaining fluid properties and preventing the need for static
+ *	declaration of dimensions and positioning.
+ *
+ * #content is the main content portion of the page.
+ * #head is the header/title of the page
+ * #foot is the footer/bottom bar of the page
+ * #lside is the left anchored side bar
+ * #rside is the right anchored side bar
+ * .glue is the class for the table elements used to position the page
+ * the anchored sections are divs that are anchored to the extreme top, bottom,
+ * 	left, or right edges of the page. bottom must be used in a table layout.
+ *
+ * Any static definition of dimensions, margins, and borders ought to be done in
+ * another css file or in the style tag of the page.
+ * Chain together classes to better define the style of an element.
+ */
+
+/* fluid page wrapper div */
+#pg		{ position:relative; }
+
+/*----------------------------------------------------------------------------*\
+|* DIVS                                                                       *|
+|* |=	 --------------------                                                 *|
+|* |	|________head________|                                                *|
+|* |    |l|                |r|                                                *|
+|* |    |s|                |s|                                                *|
+|* pg:	|i|     content    |i|                                                *|
+|* |	|d|                |d|                                                *|
+|* |	|e|                |e|                                                *|
+|* |     --------------------                                                 *|
+|* |=   |________foot________|                                                *|
+\*----------------------------------------------------------------------------*/
+#content	{ position:relative; }
+#head		{ position:relative; float:none; }
+#foot		{ position:relative; float:none; }
+#lside		{ position:relative; float:left; }
+#rside		{ position:relative; float:right; }
+
+/*----------------------------------------------------------------------------*\
+|* "CANVAS/GLUE"                                                              *|
+|*        ------------------------                                            *|
+|*       |glue      glue      elug|                                           *|
+|*       |l                      l|                                           *|
+|*       |u                      u|                                           *|
+|*       |e                      e|                                           *|
+|*canvas:|          glue          |                                           *|
+|*       |e                      e|                                           *|
+|*       |u                      u|                                           *|
+|*       |l                      l|                                           *|
+|*       |glue      glue      elug|                                           *|
+|*        ------------------------                                            *|
+|* The canvas is the top most container (can be the body tag, a div, or a     *|
+|* span) and is used in conjunction with the glue, its child container,       *|
+|* to position the page.  Specify the page location, assign the desired       *|
+|* horizontal and vertical content classes to the glue container element.     *|
+\*----------------------------------------------------------------------------*/
+.canvas		{ display:table; width:100%; height:100%;
+		  margin:0; padding:0; border:0; outline:0; }
+div.glue	{ display:table-cell; width:100%; height:100%;
+		  margin:0; padding:0; border:0; outline:0; }
+
+/* if using actual tables, just use the glue class */
+table.glue	{ display:table; width:100%; height:100%; }
+tr.glue		{ display:table-row; width:100%; }
+td.glue		{ display:table-cell; }
+
+/*----------------------------------------------------------------------------*\
+|* ANCHORED EDGE SECTIONS                                                     *|
+|*     -------------                                                          *|
+|*    |      t      |                                                         *|
+|*    |l           r|                                                         *|
+|*    |      b      |                                                         *|
+|*     -------------                                                          *|
+\*----------------------------------------------------------------------------*/
+#top-edge	{ position:fixed; left:0; top:0; width:100%; }
+#right-edge	{ position:fixed; right:0; top:0; height:100%;
+		  float:right; text-align:right; clear:right; }
+#bottom-edge	{ position:fixed; left:0; bottom:0; width:100%; }
+#left-edge	{ position:fixed; left:0; top:0; height:100%;
+		  float:left; text-align:left; clear:left; }
+/* table-layout */
+table.glue #top-edge	{ position:absolute; }
+table.glue #right-edge	{ position:absolute; }
+table.glue #bottom-edge	{ position:absolute; }
+table.glue #left-edge	{ position:absolute; }
