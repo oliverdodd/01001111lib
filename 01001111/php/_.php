@@ -378,7 +378,9 @@ class _
 		$h = _::SERVER('SERVER_NAME');
 		$s = _::SERVER('PHP_SELF');
 		$q = _::SERVER('QUERY_STRING');
-		return	($full ? "http://$h" : "").$s.($q ? "?$q" : "");
+		$p = _::SERVER('SERVER_PORT');
+		$p = $p != 80 ":$p" : "";
+		return	($full ? "http://$h$p" : "").$s.($q ? "?$q" : "");
 	}
 	public static function SCRIPT() { return _::SERVER('PHP_SELF'); }
 	
