@@ -33,6 +33,9 @@ html,body,div,table,th,tr,td,form,img,ul,li
 input,textarea		{ margin:0; padding:0; }
 table			{ border-collapse:collapse; }
 
+/* remove outlines in firefox */
+*, *:hover, *:active, *:link { outline: none; }
+
 /* force the document to take up the entire page */
 /*html,body		{ width:100%; height:100%; }*/
 
