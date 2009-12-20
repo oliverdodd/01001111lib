@@ -1,4 +1,4 @@
-/* 	Tweetrix - whoa, I can see the Tweetrix
+/* 	Tweetrix - javascript Twitter tools + word cloud
  *	Copyright (c) 2009 Oliver C Dodd
  *
  *  Permission is hereby granted,free of charge,to any person obtaining a 
@@ -36,7 +36,7 @@ Tweetrix = function(params)
 	//excludeReplies?
 	//filter common words?
 	//filter single occurences?
-	
+	params |= {};
 	this.type	= params['type']	|| "public";//public/user/search
 	this.user	= params['user']	|| "twitterapi";
 	this.searchTerm	= params['searchTerm']	|| "null";
@@ -69,6 +69,11 @@ SEARCH_URL	: "http://search.twitter.com/search",
 
 PUBLIC_TIMELINE	: "public_timeline",
 USER_TIMELINE	: "user_timeline",
+
+ATOM		: 'atom',
+JSON		: 'json',
+RSS		: 'rss',
+XML		: 'xml',
 
 urlRegEx	: /http:\/\/[\S]+/ig,
 userReplyRegEx	: /@[\S]+/g,
@@ -114,7 +119,7 @@ publicURL: function(format,params)
 
 queryString: function(args)
 {
-	if (!Tweets.isOfType(args,"Object")) return args;
+	if (!Tweetrix.isOfType(args,"Object")) return args;
 	var q = [];
 	for (var k in args)
 		q.push( encodeURIComponent(k)+"="+encodeURIComponent(args[k]));
@@ -156,7 +161,7 @@ latestNFor: function(callback,n,params)
 },
 processLatestNFor: function(entries)
 {
-	if (!Tweets.isOfType(entries,"Array")||!entries.length)
+	if (!Tweetrix.isOfType(entries,"Array")||!entries.length)
 		return this.callback(this.tweets);
 	for (var i = 0; i< entries.length; i++) {
 		if (this.excludeReplies && entries[i]['in_reply_to_user_id'])
@@ -185,7 +190,7 @@ wordCount: function(callback,n)
 processWordCount: function(entries)
 {
 	var tmpWords = [], i = 0, j = 0;
-	if (!Tweets.isOfType(entries,"Array")||!entries.length)
+	if (!Tweetrix.isOfType(entries,"Array")||!entries.length)
 		return this.countWords(this.callback);
 	for (var i = 0; i < entries.length; i++) {
 		tmpWords = this.processWords(entries[i].text);
@@ -238,16 +243,38 @@ bind: function(f)
 	};
 },
 /*-CLOUD----------------------------------------------------------------------*/
-/** format a cloud */
-cloud: function(params)
+/** create a word cloud */
+cloud: function(callback)
 {
-	
-	
+	this.buzzWords(this.bind(function (words) {
+		var s = "";
+		var exclude = Tweetrix.commonWords.split(" ");
+		for (var k in words) {
+			var i = exclude.search(k);
+			if (i < 0) {
+				var size = Math.round(this.minSize +
+						this.deltaSize*words[k]);
+				if (size > this.maxSize)
+					size = this.maxSize;
+				s += " <span style='font-size:"+size+
+					this.sizeUnits+";'"+
+					" title='"+words[k]+"'>"+k+"</span> ";
+			} else {
+				delete exclude[i];
+			}
+		}
+		callback(s);
+	}));
 }
 };
 /*-MISC-----------------------------------------------------------------------*/
-Tweets.isOfType = function(o,t)
+Tweetrix.isOfType = function(o,t)
 {
 	return Object.prototype.toString.call(o) == "[object "+t+"]";
 };
-
+Array.prototype.search = function(a,v)
+{
+	for (var i = 0; i < a.length; i++)
+		if (a[i] == v) return i;
+	return -1;
+};
