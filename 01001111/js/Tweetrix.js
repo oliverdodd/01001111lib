@@ -25,27 +25,27 @@
 Tweetrix = function(params)
 {
 	/*-PARAMETERS---------------------------------------------------------*/
-	//type = public / user / search
-	//user = for use with user based
-	//searchTerm = for use with search
-	//limit = ?????
-	//min font size = default .1
-	//max font size = default 3
-	//delta size = default .1
-	//font units = em/px/pt (default em)
-	//excludeReplies?
-	//filter common words?
-	//filter single occurences?
-	params |= {};
-	this.type	= params['type']	|| "public";//public/user/search
-	this.user	= params['user']	|| "twitterapi";
-	this.searchTerm	= params['searchTerm']	|| "null";
-	this.limit	= params['limit']	|| 20;
-	this.minSize	= params['minSize']	|| .8;
-	this.maxSize	= params['maxSize']	|| 3;
-	this.deltaSize	= params['deltaSize']	|| .1;
-	this.sizeUnits	= params['sizeUnits']	|| "em";
-	
+	this.applyOptions = function(params,defaults) {
+		params = params || {};
+		for (var k in defaults) {
+			this[k] = (params[k] == undefined) ? defaults[k] : params[k];
+		}
+	};
+	this.applyOptions(params,{
+		type:		"public",//public/user/search
+		user:		"twitterapi",
+		searchTerm:	"null",
+		limit:		200,
+		minSize:	.8,
+		maxSize:	2,
+		deltaSize:	.2,
+		sizeUnits:	"em",
+		minCount:	0,
+		minWordLength:	3,
+		filterUsernames:true,
+		filterURLs:	true,
+		filterNumbers:	true
+	});
 	/*-VARIABLES----------------------------------------------------------*/
 	this.tweets = [];
 	this.words = [];
@@ -183,34 +183,36 @@ wordCount: function(callback,n)
 {
 	this.callback = callback;
 	this.count = n;
-	this.grabCount = this.count == undefined ? 200 : this.count;
+	this.grabCount = this.count == undefined ? this.limit : this.count;
 	var url = this.userURL(this.user,this.JSON,{page:this.page,count:this.grabCount});
 	this.request(url,this.bind(this.processWordCount));
 },
 processWordCount: function(entries)
 {
-	var tmpWords = [], i = 0, j = 0;
+	var tmpWords = [];
 	if (!Tweetrix.isOfType(entries,"Array")||!entries.length)
 		return this.countWords(this.callback);
 	for (var i = 0; i < entries.length; i++) {
-		tmpWords = this.processWords(entries[i].text);
-		if (!tmpWords) return this.countWords(this.callback);
-		for (j = 0; j < tmpWords.length; j++)
-			this.words.push(tmpWords[j]);
 		this.grabbed++;
-		if ((this.count != undefined)&&(this.grabbed >= this.count))
-			return this.countWords(this.callback);
+		tmpWords = this.processWords(entries[i].text);
+		if (!tmpWords)
+			continue;
+		for (var j = 0; j < tmpWords.length; j++)
+			this.words.push(tmpWords[j]);
 	}
-	if ((this.count == undefined)&&(entries.length < this.grabCount))
+	if ((entries.length < this.grabCount)||(this.grabbed >= this.count)) {
 		return this.countWords(this.callback);
+	}
 	this.page++;
 	this.wordCount(this.callback,this.count);
 },
 processWords: function(text)
 {
 	if (text == undefined) return [];
-	text = text.replace(this.urlRegEx,"");
-	text = text.replace(this.userReplyRegEx,"");
+	if (this.filterURLs)
+		text = text.replace(this.urlRegEx,"");
+	if (this.filterUsernames)
+		text = text.replace(this.userReplyRegEx,"");
 	return text.toLowerCase().match(/[\w-']+/g);
 },
 countWords: function(callback)
@@ -246,25 +248,35 @@ bind: function(f)
 /** create a word cloud */
 cloud: function(callback)
 {
-	this.buzzWords(this.bind(function (words) {
+	this.wordCount(this.bind(function (words) {
 		var s = "";
 		var exclude = Tweetrix.commonWords.split(" ");
 		for (var k in words) {
+			if (words[k] < this.minCount)
+				continue;
+			if (k.length < this.minWordLength)
+				continue;
+			if (this.filterNumbers && !isNaN(Number(k)))
+				continue;
 			var i = exclude.search(k);
 			if (i < 0) {
-				var size = Math.round(this.minSize +
-						this.deltaSize*words[k]);
-				if (size > this.maxSize)
+				var b = "";
+				var size = this.minSize + 
+					this.deltaSize * 
+					(words[k] - this.minCount);
+				if (size > this.maxSize) {
 					size = this.maxSize;
+					b = "font-weight:bold;";
+				}
 				s += " <span style='font-size:"+size+
-					this.sizeUnits+";'"+
+					this.sizeUnits+";"+b+"'"+
 					" title='"+words[k]+"'>"+k+"</span> ";
 			} else {
 				delete exclude[i];
 			}
 		}
 		callback(s);
-	}));
+	}),this.limit);
 }
 };
 /*-MISC-----------------------------------------------------------------------*/
@@ -272,9 +284,9 @@ Tweetrix.isOfType = function(o,t)
 {
 	return Object.prototype.toString.call(o) == "[object "+t+"]";
 };
-Array.prototype.search = function(a,v)
+Array.prototype.search = function(v)
 {
-	for (var i = 0; i < a.length; i++)
-		if (a[i] == v) return i;
+	for (var i = 0; i < this.length; i++)
+		if (this[i] == v) return i;
 	return -1;
 };
