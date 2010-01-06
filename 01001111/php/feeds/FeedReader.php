@@ -1,5 +1,5 @@
 <?php
-/* 	BlogRSS Class - Grab blog entries and pertinent info from RSS feeds
+/* 	FeedReader Class - Read a subset of information from RSS and Atom feeds
  *	Copyright (c) 2008 Oliver C Dodd
  *
  *  Permission is hereby granted,free of charge,to any person obtaining a 
@@ -20,36 +20,12 @@
  *  FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  *  DEALINGS IN THE SOFTWARE.
  */
-class BlogRSS
+require_once('FeedEntry.php');
+require_once('Feed.php');
+require_once('FeedEntryType.php');
+require_once('FeedType.php');
+class FeedReader
 {
-	/*--------------------------------------------------------------------*\
-	|* BLOG TYPES (only Blogger and Wordpress currently supported         *|
-	\*--------------------------------------------------------------------*/
-	const BLOGGER	= 'Blogger';
-	const WORDPRESS	= 'wordpress';
-	
-	/*--------------------------------------------------------------------*\
-	|* RSS FEED ATTRIBUTES PER BLOG TYPE                                  *|
-	\*--------------------------------------------------------------------*/
-	protected static $attributes = array(
-		self::BLOGGER	=> array(
-			'entry'		=> 'entry',
-			'title'		=> 'title',
-			'date'		=> 'published',
-			'link'		=> array('tag' => 'link',
-						 'attributes' => array('rel' => 'alternate'),
-						 'get' => 'href'),
-			'content'	=> 'content',
-		),
-		self::WORDPRESS	=> array(
-			'entry'		=> 'item',
-			'title'		=> 'title',
-			'date'		=> 'pubDate',
-			'link'		=> 'link',
-			'content'	=> 'description',
-		)
-	);
-	
 	/*--------------------------------------------------------------------*\
 	|* FETCH/PARSE/GET FEED                                               *|
 	\*--------------------------------------------------------------------*/
@@ -71,26 +47,31 @@ class BlogRSS
 	{
 		$doc = new DOMDocument();
 		$doc->loadXML($xml);
-		
-		$blog = array();
-		$blog['title'] = $doc->getElementsByTagName('title')->item(0)->nodeValue;
-		$blog['generator'] = $doc->getElementsByTagName('generator')->item(0)->nodeValue;
-		
-		if ($type === null)
-			$type = self::detectType($blog['generator']);
-		if (!$type) return $blog;
-		
-		$attributes = self::$attributes[$type];
-		$entryTag = array_pluck($attributes,'entry');
-		$blog['entries'] = array();
-		foreach ($doc->getElementsByTagName($entryTag) as $node) {
-			$entry = array();
-			foreach ($attributes as $k => $v)
-				$entry[$k] = self::tagValue($node,$v);
-			$entry['blogTitle'] = $blog['title'];
-			array_push($blog['entries'],$entry);
+		$feed = new Feed();
+		$entryFeed = new Feed();
+		// detect type
+		$feedType = FeedType::detect($doc);
+		if (!$feedType) return $feed;
+		// feed attributes
+		foreach ($feed as $k => $v) {
+			// ignore entries for now
+			if ($k == 'entries') continue;
+			$feed->$k = self::tagValue($doc,$feedType->$k);
+			$entryFeed->k = $feed->$k;
 		}
-		return $blog;
+		// entries
+		$feed->entries = array();
+		foreach ($doc->getElementsByTagName($feedType->entryTag) as $node) {
+			$entry = new FeedEntry();
+			$entry->feed = $entryFeed;
+			foreach ($entry as $k => $v) {
+				// ignore feed
+				if ($k == 'feed') continue;
+				$entry->$k = self::tagValue($node,$feedType->entries->$k);
+			}
+			$feed->entries[] = $entry;
+		}
+		return $feed;
 	}
 	
 	public static function get($uri,$type=null)
@@ -120,21 +101,11 @@ class BlogRSS
 				break;
 			}
 		}
-		return isset($tag['get'])
-			? $element->getAttribute($tag['get'])
-			: $element->nodeValue;
-	}
-	
-	/*--------------------------------------------------------------------*\
-	|* DETECT/BUILD                                                       *|
-	\*--------------------------------------------------------------------*/
-	public static function detectType($generator)
-	{
-		if (stripos($generator,self::BLOGGER) !== false)
-			return self::BLOGGER;
-		if (stripos($generator,self::WORDPRESS) !== false)
-			return self::WORDPRESS;
-		return "";
+		return $found
+			? (isset($tag['get'])
+				? $element->getAttribute($tag['get'])
+				: $element->nodeValue)
+			: null;
 	}
 	
 	/*--------------------------------------------------------------------*\
@@ -145,9 +116,9 @@ class BlogRSS
 		if (!is_array($urls)) $urls = array($urls);
 		$latestEach = self::latestNeach($urls,$n);
 		$dateOrdered = array();
-		foreach ($latestEach as $blog => $entries) {
-			foreach ($entries as $e) {
-				$t = strtotime($e['date']).' '.$e['title'];
+		foreach ($latestEach as $feed) {
+			foreach ($feed->entries as $e) {
+				$t = strtotime($e->date).' '.$e->title;
 				$dateOrdered[$t] = $e;
 			}
 		}
@@ -166,12 +137,7 @@ class BlogRSS
 		if (!is_array($urls)) $urls = array($urls);
 		$latest = array();
 		foreach ($urls as $url) {
-			$blog = self::get($url);
-			$title = $blog['title'];
-			$entries = $blog['entries'];
-			$latest[$title] = array();
-			for ($i = 0; ($i < count($entries))&&($i < $n); $i++)
-				$latest[$title][$i] = $entries[$i];
+			$latest[$url] = self::get($url);
 		}
 		return $latest;
 	}
