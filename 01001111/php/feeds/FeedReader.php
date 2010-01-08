@@ -46,7 +46,7 @@ class FeedReader
 		
 	}
 	
-	public static function parse($xml,$type=null)
+	public static function parse($xml,$n=0)
 	{
 		$doc = new DOMDocument();
 		$doc->loadXML($xml);
@@ -56,10 +56,12 @@ class FeedReader
 		$feedType = FeedType::detect($doc);
 		if (!$feedType) return $feed;
 		// feed attributes
+		$node = $doc->getElementsByTagName($feedType->rootTag)->item(0);
 		foreach ($feed as $k => $v) {
 			// ignore entries for now
 			if ($k == 'entries') continue;
-			$feed->$k = self::tagValue($doc,$feedType->$k);
+			$tag = isset($feedType->$k) ? $feedType->$k : $k;
+			$feed->$k = self::tagValue($node,$tag);
 			$entryFeed->$k = $feed->$k;
 		}
 		// entries
@@ -70,16 +72,20 @@ class FeedReader
 			foreach ($entry as $k => $v) {
 				// ignore feed
 				if ($k == 'feed') continue;
-				$entry->$k = self::tagValue($node,$feedType->entries->$k);
+				$tag = isset($feedType->entries->$k)
+					? $feedType->entries->$k : $k;
+				$entry->$k = self::tagValue($node,$tag);
 			}
 			$feed->entries[] = $entry;
+			if (--$n == 0)
+				break;
 		}
 		return $feed;
 	}
 	
-	public static function get($uri,$type=null)
+	public static function get($uri,$n=0)
 	{
-		return self::parse(self::fetch($uri),$type);
+		return self::parse(self::fetch($uri),$n);
 	}
 	
 	/*--------------------------------------------------------------------*\
@@ -87,8 +93,13 @@ class FeedReader
 	\*--------------------------------------------------------------------*/
 	public static function tagValue($node,$tag)
 	{
-		if (!is_array($tag))
-			return @$node->getElementsByTagName($tag)->item(0)->nodeValue;
+		if (!is_array($tag)) {
+			$items = $node->getElementsByTagName($tag);
+			$i = 0;
+			do {	$v = @$items->item($i)->textContent;
+			} while(!$v && $i++ < $items->length);
+			return $v;
+		}
 		//get tag info
 		$tagName = $tag['tag'];
 		$attributes = isset($tag['attributes']) ? $tag['attributes'] : array();
@@ -107,7 +118,7 @@ class FeedReader
 		return $found
 			? (isset($tag['get'])
 				? $element->getAttribute($tag['get'])
-				: $element->nodeValue)
+				: $element->textContent)
 			: null;
 	}
 	
@@ -140,7 +151,7 @@ class FeedReader
 		if (!is_array($urls)) $urls = array($urls);
 		$latest = array();
 		foreach ($urls as $url) {
-			$latest[$url] = self::get($url);
+			$latest[$url] = self::get($url,$n);
 		}
 		return $latest;
 	}
