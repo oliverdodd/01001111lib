@@ -60,7 +60,7 @@ class FeedReader
 			// ignore entries for now
 			if ($k == 'entries') continue;
 			$feed->$k = self::tagValue($doc,$feedType->$k);
-			$entryFeed->k = $feed->$k;
+			$entryFeed->$k = $feed->$k;
 		}
 		// entries
 		$feed->entries = array();
