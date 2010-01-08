@@ -31,16 +31,19 @@ class FeedReader
 	\*--------------------------------------------------------------------*/
 	public static function fetch($uri)
 	{
-		$ch = curl_init();
-		if (!$ch) return "";
-		curl_setopt($ch,CURLOPT_URL,$uri);
-		curl_setopt($ch,CURLOPT_HEADER,false);
-		curl_setopt ($ch,CURLOPT_RETURNTRANSFER,true);
-		//set fake user agent in case feedburner is being used
-		curl_setopt($ch,CURLOPT_USERAGENT,'FeedBurner/1.0 (http://www.FeedBurner.com)');  
-		$xml = curl_exec($ch);
-		curl_close($ch);
-		return $xml;
+		if (function_exists("curl_init") && ($ch = curl_init())) {
+			curl_setopt($ch,CURLOPT_URL,$uri);
+			curl_setopt($ch,CURLOPT_HEADER,false);
+			curl_setopt ($ch,CURLOPT_RETURNTRANSFER,true);
+			//set fake user agent in case feedburner is being used
+			curl_setopt($ch,CURLOPT_USERAGENT,'FeedBurner/1.0 (http://www.FeedBurner.com)');  
+			$xml = curl_exec($ch);
+			curl_close($ch);
+			return $xml;
+		} else {
+			return file_get_contents($uri);
+		}
+		
 	}
 	
 	public static function parse($xml,$type=null)
