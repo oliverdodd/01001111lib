@@ -74,6 +74,25 @@ class _
 		return (is_array($a)&&isset($a[$k])&&($a[$k]===$v))?true:false;
 	}
 	
+	/** Ain() - verify array and check for presence of specified key
+	 *  @param $a		array
+	 *  @param $k		key
+	 */
+	public static function Ain($a,$k)
+	{
+		return (is_array($a)&&isset($a[$k]))?true:false;
+	}
+	
+	/** Anz() - verify array and check for presence of specified key and
+	 *          that it is not zero length
+	 *  @param $a		array
+	 *  @param $k		key
+	 */
+	public static function Anz($a,$k)
+	{
+		return (is_array($a)&&isset($a[$k])&&strlen($a[$k]))?true:false;
+	}
+
 	/** K() - find the key with a specified value or return a default
 	 *  @param $a		array
 	 *  @param $v		value
@@ -289,6 +308,9 @@ class _
 	}
 	
 	/** SESSION() - checks the $_SESSION global array */
+	public static function SESSIONis($k,$v) { return _::Ais($_SESSION,$k,$v); }
+	public static function SESSIONin($k) { return _::Ain($_SESSION,$k); }
+	public static function SESSIONnz($k) { return _::Anz($_SESSION,$k); }
 	public static function SESSION($k,$d='',$set=false)
 	{
 		return (isset($_SESSION)) ? _::A($_SESSION,$k,$d,$set) : $d;
@@ -301,6 +323,8 @@ class _
 	public static function GET($k,$d='') { return _::A($_GET,$k,$d); }
 	public static function GETa($ka,$da=array()) { return _::Aa($_GET,$ka,$da); }
 	public static function GETis($k,$v) { return _::Ais($_GET,$k,$v); }
+	public static function GETin($k) { return _::Ain($_GET,$k); }
+	public static function GETnz($k) { return _::Anz($_GET,$k); }
 	public static function uGET($k,$d='',$disinfect=false,$allowed_tags='')
 	{
 		return _::uA($_GET,$k,$d,$disinfect,$allowed_tags);
@@ -323,6 +347,8 @@ class _
 	}
 	public static function POSTa($ka,$da=array()) { return _::Aa($_POST,$ka,$da); }
 	public static function POSTis($k,$v) { return _::Ais($_POST,$k,$v); }
+	public static function POSTin($k) { return _::Ain($_POST,$k); }
+	public static function POSTnz($k) { return _::Anz($_POST,$k); }
 	public static function uPOST($k,$d='',$disinfect=false,$allowed_tags='')
 	{
 		return _::uA($_POST,$k,$d,$disinfect,$allowed_tags);
@@ -416,5 +442,30 @@ class _
 	/** import() - import a variable dumped as a string using _::export()
 	 */
 	public static function import($s) { return @eval("return $s;"); }
+
+	public static $_incparams = array();
+
+	/** p() - returns parameters passed to include script using inc
+	 */
+	public static function p( $v, $d = '' ) 
+	{ return ( isset( self::$_incparams[ $v ] ) ) ? self::$_incparams[ $v ] : $d; }
+
+	/** pa() - returns entire script parameter array
+	 */
+	public static function pa() { return self::$_incparamsd; }
+
+	/** inc() - Includes a script, passing parameters and returning the script output
+	 *			output as a string.
+	 *	@param $f	Script filename
+	 */
+	public static function inc( $f ) 
+	{	$old = self::$_incparams; 
+		self::$_incparams = func_get_args();
+		ob_start(); 
+		include( $f ); 	
+		self::$_incparams = $old; 
+		return ob_get_clean(); 
+	}
+
 }
 ?>
