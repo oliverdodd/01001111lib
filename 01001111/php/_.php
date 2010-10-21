@@ -93,6 +93,27 @@ class _
 		return (is_array($a)&&isset($a[$k])&&strlen($a[$k]))?true:false;
 	}
 
+	/** Asz() - returns the size of the specified array
+	 *  @param $a		array
+	 */
+	public static function Asz($a)
+	{
+		return is_array($a)?count($a):0;
+	}
+
+	/** V() - check an array for a specific key and return the value if it
+	 * 	exists or a default if it doesn't
+	 *  @param $a		array
+	 *  @param $k		key
+	 *  @param $d		default value
+	 */
+	public static function V($a,$k,$d='')
+	{
+		if (!is_array($a)) return $d;
+		if (!isset($a[$k])) return $d;
+		return $a[$k];
+	}
+
 	/** K() - find the key with a specified value or return a default
 	 *  @param $a		array
 	 *  @param $v		value

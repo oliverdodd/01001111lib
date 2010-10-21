@@ -90,11 +90,13 @@ class Database
 		@mysql_connect($this->server,$this->user,$this->pass)
 			or die($this->error());
 		if ($createDB&&!self::$created) {
-			$this->query("CREATE DATABASE IF NOT EXISTS ".$this->database);
+			if ( !$this->query("CREATE DATABASE IF NOT EXISTS ".$this->database) )
+				return false;
 			self::$created = true;
 		}
-		if ($selectDB) @mysql_select_db($this->database)
-			or die($this->error());
+		if ($selectDB) 
+			if (!@mysql_select_db($this->database))
+				if (DB_DEBUG_SQL) echo $this->error()."<br />\n";
 	}
 	
 	/** close() - close the connection to the database */
@@ -134,7 +136,6 @@ class Database
 	public function get($sql)
 	{
 		$a = array();
-		$this->connect();
 		$r = $this->query($sql);
 		if ($r) for ($i = 0; $i < $this->rows(); $i++)
 			$a[$i] = $this->results($r);
@@ -157,7 +158,6 @@ class Database
 	 */
 	public function getRow($sql)
 	{
-		$this->connect();
 		$r = $this->query($sql);
 		if ($r) return $this->results($r);
 	}
@@ -165,7 +165,7 @@ class Database
 	/** set() - execute a SQL query and return the resource, not results
 	 *  @param $sql		- the SQL statement
 	 */
-	public function set($sql) { $this->connect(); return $this->query($sql); }
+	public function set($sql) { return $this->query($sql); }
 	
 	/*--------------------------------------------------------------------*\
 	|* HIGH-LEVEL FUNCTIONS                                               *|
