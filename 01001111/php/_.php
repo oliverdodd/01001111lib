@@ -101,6 +101,27 @@ class _
 		return is_array($a)?count($a):0;
 	}
 
+	/** filter() - filters keys from an array
+	 *  @param $a		array
+		@param $k		keys
+		@param $in		if true, keys not in $k are removed
+						if false, keys in $k are removed
+	 */
+	public static function filter($a,$k,$in=true)
+	{
+		if (!is_array($a)) return array();
+		if (!is_array($k)) return $in?array():$a;
+		if (!$in) 
+		{	if ( _::is_assoc($k) ) foreach($k as $kk=>$kv) unset( $a[$kk] );
+			else foreach($k as $kk) unset( $a[$kk] );
+			return $a; 
+		}
+		$r = array(); 
+		if ( _::is_assoc($k) ) { foreach($k as $kk=>$kv) if (isset($a[$kk])) $r[$kk] = $a[$kk]; }
+		else foreach($k as $kk=>$kv) if (isset($a[$kv])) $r[$kv] = $a[$kv];
+		return $r;
+	}
+
 	/** V() - check an array for a specific key and return the value if it
 	 * 	exists or a default if it doesn't
 	 *  @param $a		array
@@ -171,6 +192,13 @@ class _
 		return $a;
 	}
 	
+	public static function is_assoc($a)
+	{
+		foreach (array_keys($a) as $k => $v) 
+			if ( $k !== $v ) return true;
+		return false;
+	}
+
 	/*--------------------------------------------------------------------*\
 	|* OBJECTS/CLASSES                                                    *|
 	\*--------------------------------------------------------------------*/
@@ -336,6 +364,7 @@ class _
 	{
 		return (isset($_SESSION)) ? _::A($_SESSION,$k,$d,$set) : $d;
 	}
+	public static function filterSESSION($k) { return _::filter($_SESSION,$k); }
 	
 	/** FILES() - checks the $_FILES global array */
 	public static function FILES($k,$d='') {return _::A($_FILES,$k,$d); }
@@ -355,6 +384,7 @@ class _
 		$_GET = _::clean($_GET,$disinfect,$allowed_tags);
 		return $_GET;
 	}
+	public static function filterGET($k) { return _::filter($_GET,$k); }
 	
 	/** POST() - checks the $_POST global array
 	 * if POST varibles sent through AJAX aren't appearing, try setting the
@@ -391,6 +421,7 @@ class _
 				$_POST[$kv[0]] = $kv[1];
 		}
 	}
+	public static function filterPOST($k) { return _::filter($_POST,$k); }
 	
 	/** REQUEST() - checks the $_REQUEST global array */
 	public static function REQUEST($k,$d='') { return _::A($_REQUEST,$k,$d); }

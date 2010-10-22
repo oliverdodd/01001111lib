@@ -269,6 +269,23 @@ class Database
 		if ($cols !== '') $cols = " ($cols)";
 		return $this->set("INSERT INTO $table$cols$vals");
 	}
+
+	/** insertArray() - insert raw array values into a table
+	 *  @param $table		- the table
+	 *  @param $vals		- array specifying column => value
+	 *  @param $associative	- the columns to set
+	 */
+	function insertArray($table,$vals, $associative=false)
+	{	if (!is_array($vals)) return false;
+		$colstr=''; $valstr=''; $i = 0;
+		foreach($vals as $k=>$v) {
+			$colstr .= (($i)?',`':'`').addslashes($k).'`';
+			$valstr .= (($i)?',\'':'\'').addslashes($v).'\'';
+			$i++;
+		}
+		return $this->insert($table,$valstr,$colstr);
+	} // end else
+
 	
 	/* EDIT                                                               */
 	/** replace() - insert into table if primary key does not exist, else
@@ -353,7 +370,7 @@ class Database
 				$cols[$i] = array();
 				foreach ($keys as $k) $cols[$i][$k] = @$c[$k];
 			}
-			else	$cols[$i] = @$c[$keys[0]];
+			else $cols[$i] = @$c[$keys[0]];
 		}
 		return $cols;
 	}
@@ -435,7 +452,7 @@ class Database
 			elseif (is_bool($v))	$values[$i] = ($v) ? 1 : 0;
 			elseif (is_string($v))	$values[$i] = "'$v'";
 			//else $values[$i] = '"'.addslashes(var_export($v,true)).'"';
-			if ($associative) $values[$i] = "$i=".$values[$i];
+			if ($associative) $values[$i] = "`$i`=".$values[$i];
 		}
 		return implode($d,$values);
 	}
