@@ -90,7 +90,7 @@ class _
 	 */
 	public static function Anz($a,$k)
 	{
-		return (is_array($a)&&isset($a[$k])&&strlen($a[$k]))?true:false;
+		return (is_array($a)&&isset($a[$k])&&((is_array($a[$k])&&count($a[$k]))||strlen($a[$k])))?true:false;
 	}
 
 	/** Asz() - returns the size of the specified array
@@ -133,6 +133,19 @@ class _
 		if (!is_array($a)) return $d;
 		if (!isset($a[$k])) return $d;
 		return $a[$k];
+	}
+
+	/** Vhtml() - check an array for a specific key and return the html encoded
+	 *  value if it exists or a default if it doesn't
+	 *  @param $a		array
+	 *  @param $k		key
+	 *  @param $d		default value
+	 */
+	public static function Vhtml($a,$k,$d='')
+	{
+		if (!is_array($a)) return htmlentities( $d );
+		if (!isset($a[$k])) return htmlentities( $d );
+		return htmlentities( $a[$k], ENT_QUOTES );
 	}
 
 	/** K() - find the key with a specified value or return a default
@@ -360,6 +373,7 @@ class _
 	public static function SESSIONis($k,$v) { return _::Ais($_SESSION,$k,$v); }
 	public static function SESSIONin($k) { return _::Ain($_SESSION,$k); }
 	public static function SESSIONnz($k) { return _::Anz($_SESSION,$k); }
+	public static function SESSIONhtml($k) { return _::Vhtml($_SESSION,$k); }
 	public static function SESSION($k,$d='',$set=false)
 	{
 		return (isset($_SESSION)) ? _::A($_SESSION,$k,$d,$set) : $d;
@@ -375,6 +389,7 @@ class _
 	public static function GETis($k,$v) { return _::Ais($_GET,$k,$v); }
 	public static function GETin($k) { return _::Ain($_GET,$k); }
 	public static function GETnz($k) { return _::Anz($_GET,$k); }
+	public static function GEThtml($k) { return _::Vhtml($_GET,$k); }
 	public static function uGET($k,$d='',$disinfect=false,$allowed_tags='')
 	{
 		return _::uA($_GET,$k,$d,$disinfect,$allowed_tags);
@@ -400,6 +415,7 @@ class _
 	public static function POSTis($k,$v) { return _::Ais($_POST,$k,$v); }
 	public static function POSTin($k) { return _::Ain($_POST,$k); }
 	public static function POSTnz($k) { return _::Anz($_POST,$k); }
+	public static function POSThtml($k) { return _::Vhtml($_POST,$k); }
 	public static function uPOST($k,$d='',$disinfect=false,$allowed_tags='')
 	{
 		return _::uA($_POST,$k,$d,$disinfect,$allowed_tags);
