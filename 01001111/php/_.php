@@ -101,11 +101,58 @@ class _
 		return is_array($a)?count($a):0;
 	}
 
+	/** Atmpl() - Applies template to array
+	 *  @param $a		an array
+	 *  @param $tmpl	template to apply
+	 *  @param $join	string used to join multiple items
+	 *  @param $kf		optional function to encode key
+	 *  @param $vf		optional function to encode value
+	 *  @param $def		default value to return
+	 *  @param $kr		string in template to replace with key
+	 *  @param $vr		string in template to replace with value
+	 *
+	 *  Examples:
+	 *
+	 *  // Urlencode array
+	 *  _::Atmpl( $a, '$k=$v', '&', 'urlencode' );
+	 *
+	 *  // Create escaped MySQL query
+	 *  _::Atmpl( $a, '`$k`=\'$v\'', ' AND ', 'mysql_real_escape_string' );
+	 *
+	 */
+	public static function Atmpl($a,$tmpl,$join,$kf=0,$vf=0,$def='',$kr='$k',$vr='$v')
+	{
+		if (!is_array($a)||!count($a)) return $def;
+		$i = 0; if ( $kf && !$vf ) $vf = $kf;
+		if ( _::is_assoc($a) )
+			foreach( $a as $k=>$v ) 
+				$def .= ( $i++ ? $join : '' ) . str_replace( $kr, $kf?call_user_func($kf,$k):$k, str_replace( $vr, $vf?$vf($v):$v, $tmpl ) );
+		else
+			foreach( $a as $v ) 
+				$def .= ( $i++ ? $join : '' ) . str_replace( $vr, $vf?call_user_func($vf,$v):$v, $tmpl );
+		return $def;
+	}
+
+	/** Asub() - Substitute array values in template
+	 *  @param $a		an array
+	 *  @param $tmpl	template to apply
+	 *  @param $kf		optional function to apply to key
+	 *  @param $vf		optional function to encode value
+	 *  @param $pre		prefix that identifies replace token
+	 */
+	public static function Asub($a,$tmpl,$kf=0,$vf=0,$pre='$')
+	{
+		if (!is_array($a)||!count($a)||!_::is_assoc($a)) return $tmpl;
+		foreach( $a as $k=>$v ) 
+			$tmpl=str_replace( $pre.($kf?call_user_func($kf,$k):$k), $vf?call_user_func($vf,$v):$v, $tmpl );
+		return $tmpl;
+	}
+
 	/** filter() - filters keys from an array
 	 *  @param $a		array
-		@param $k		keys
-		@param $in		if true, keys not in $k are removed
-						if false, keys in $k are removed
+	 *  @param $k		keys
+	 *  @param $in		if true, keys not in $k are removed
+	 *					if false, keys in $k are removed
 	 */
 	public static function filter($a,$k,$in=true)
 	{
@@ -130,9 +177,44 @@ class _
 	 */
 	public static function V($a,$k,$d='')
 	{
-		if (!is_array($a)) return $d;
-		if (!isset($a[$k])) return $d;
+		if (!is_array($a)||!isset($a[$k])) return $d;
 		return $a[$k];
+	}
+
+	/** Vtmpl() - check an array for a specific key and return the value in a
+	 * 	template if it exists, or return default value
+	 *  @param $a		array
+	 *  @param $k		key
+	 *  @param $tmpl	template
+	 *  @param $ff		function to apply to string
+	 *  @param $def		default value
+	 *  @param $fr		replace value
+	 */
+	public static function Vtmpl($a,$k,$tmpl,$vf=0,$def='',$vr='$v')
+	{
+		if (!is_array($a)||!isset($a[$k])) return $def;
+		return str_replace($vr,$vf?call_user_func($vf,$a[$k]):$a[$k],$tmpl);
+	}
+
+	/** Stmpl() - Returns the specified string in a template if it has a non-zero length
+	 *  @param $s		string
+	 *  @param $tmpl	template
+	 *  @param $sf		function to apply to string
+	 *  @param $def		default value
+	 *  @param $sr		replace value
+	 */
+	public static function Stmpl($s,$tmpl,$sf=0,$def='',$sr='$s')
+	{	
+		if (!is_string($s)||!strlen($s)) return $def;
+		return str_replace($sr,$sf?call_user_func($sf,$s):$s,$tmpl);
+	}
+
+	/** html() - Encodes a string so it is safe for html
+	 *  @param $s		string
+	 */
+	public static function html($s)
+	{
+		return htmlentities( $s, ENT_QUOTES );
 	}
 
 	/** Vhtml() - check an array for a specific key and return the html encoded
@@ -145,7 +227,7 @@ class _
 	{
 		if (!is_array($a)) return htmlentities( $d );
 		if (!isset($a[$k])) return htmlentities( $d );
-		return htmlentities( $a[$k], ENT_QUOTES );
+		return _::html( $a[$k], ENT_QUOTES );
 	}
 
 	/** K() - find the key with a specified value or return a default
@@ -467,6 +549,77 @@ class _
 	/*--------------------------------------------------------------------*\
 	|* URL                                                                *|
 	\*--------------------------------------------------------------------*/
+	
+	/** pathMake() - Creates a proper tpath from the specified components
+	 *  @param $root		= root path component
+	 *  @param $path		= path component
+	 *  @param $sep			= path separator
+	 */
+	public static function pathMake($root,$path,$sep='/')
+	{	if(!strlen($root)) return $path; if (!strlen($path)) return $root;
+		return rtrim($root,'\/').$sep.ltrim( $path,'\/');
+	}
+
+	/** pathRoot() - Returns the full root for the specified path
+	 *  @param $path		= path component
+	 */
+	public static function pathRoot($path)
+	{	$lbs = strlen(strrchr($path,'\\'));
+		$lfs = strlen(strrchr($path,'/'));
+		if (!$lbs&&!$lfs ) return $path;
+		if (!$lbs||($lfs&&$lfs<$lbs))
+			return substr($path,0,strlen($path)-$lfs);
+		return substr($path,0,strlen($path)-$lbs);
+	}
+
+	/** pathFile() - Returns the file name from the path
+	 *  @param $path		= path component
+	 */
+	public static function pathFile($path)
+	{	$e = preg_split('/[\\\\\\/]+/',$path);
+		if (!is_array($e)||!count($e)) return $path;
+		return $e[count($e)-1];
+	}
+
+	/** pathIndex() - Returns a path suitable for indexing
+	 *  @param $token		= token for building the path
+	 *  @param $block_size	= max directory characters
+	 *  @param $depth		= max directory depth
+	 *  @param $sep			= path separator
+	 */
+	public static function pathIndex($root,$token,$block_size=3,$depth=3,$sep='/')
+	{	$path = '';$max=strlen($token);
+		for ($i = 0;$i<$depth&&0<$max;$i++)
+		{	if ($i) $path .= $sep; $max -= $block_size;
+			$path .= substr( $token, $i * $block_size, $block_size );
+		} // end for
+		return _::pathMake($root,_::pathMake($path,$token));
+	}
+
+	public static function DISK($f='',$full=true)
+	{	$r = str_replace('\\','/',_::pathRoot(_::SERVER('SCRIPT_FILENAME')));
+		return ($f ? _::pathMake($r,$f) : $r);
+	}
+
+	public static function WEB($f='',$proto='http',$full=true)
+	{
+		$h = _::SERVER('SERVER_NAME');
+		$s = _::pathRoot(_::SERVER('PHP_SELF'));
+		$p = _::SERVER('SERVER_PORT');
+		$p = $p != 80 ? ":$p" : "";
+		$r = ($full ? $proto."://$h$p" : "").$s;
+		return ($f ? _::pathMake($r,$f) : $r);
+	}
+
+	public static function SELF($q='',$full=true)
+	{
+		$h = _::SERVER('SERVER_NAME');
+		$s = _::SERVER('PHP_SELF');
+		$p = _::SERVER('SERVER_PORT');
+		$p = $p != 80 ? ":$p" : "";
+		return	($full ? "http://$h$p" : "").$s.($q ? "?$q" : "");
+	}
+
 	public static function URL($full=true)
 	{
 		$h = _::SERVER('SERVER_NAME');
@@ -523,16 +676,19 @@ class _
 	public static function pa() { return self::$_incparamsd; }
 
 	/** inc() - Includes a script, passing parameters and returning the script output
-	 *			output as a string.
+	 *			output as a string.  Saves and restores any current data being buffered.
 	 *	@param $f	Script filename
 	 */
 	public static function inc( $f ) 
 	{	$old = self::$_incparams; 
 		self::$_incparams = func_get_args();
+		$prev = ob_get_clean();
 		ob_start(); 
 		include( $f ); 	
 		self::$_incparams = $old; 
-		return ob_get_clean(); 
+		$ret = ob_get_clean(); 
+		if ($prev) { ob_start(); echo $prev; }
+		return $ret;
 	}
 
 }

@@ -269,9 +269,9 @@ class Filesystem
 	/** pathComponents() - split a path into an array of its components
 	 *  @param $path	= the file/directory path
 	 */
-	public static function pathComponents($path)
+	public static function pathComponents($path,$absolute=true)
 	{
-		return explode('/',self::cleanPath($path));
+		return explode('/',self::cleanPath($path,$absolute));
 	}
 	
 	/** dots() - are '.' or '..' contained in the specified path?
@@ -447,6 +447,7 @@ class Filesystem
 		return $contents;
 	}
 	
+
 	/*--------------------------------------------------------------------*\
 	|* OPERATING SYSTEM                                                   *|
 	\*--------------------------------------------------------------------*/
