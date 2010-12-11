@@ -617,17 +617,14 @@ class _
 		$s = _::SERVER('PHP_SELF');
 		$p = _::SERVER('SERVER_PORT');
 		$p = $p != 80 ? ":$p" : "";
-		return	($full ? "http://$h$p" : "").$s.($q ? "?$q" : "");
+		$https = _::SERVER('HTTPS');
+		if ($https === 'off') $https = false;
+		return ($full ? "http".($https ? "s" :"")."://$h$p" : "").$s.($q ? "?$q" : "");
 	}
 
 	public static function URL($full=true)
 	{
-		$h = _::SERVER('SERVER_NAME');
-		$s = _::SERVER('PHP_SELF');
-		$q = _::SERVER('QUERY_STRING');
-		$p = _::SERVER('SERVER_PORT');
-		$p = $p != 80 ? ":$p" : "";
-		return	($full ? "http://$h$p" : "").$s.($q ? "?$q" : "");
+		return _::SELF(_::SERVER('QUERY_STRING'),$full);
 	}
 	public static function SCRIPT() { return _::SERVER('PHP_SELF'); }
 	
